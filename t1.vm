@@ -1,0 +1,10 @@
+push int8(52)
+push int16(275)
+dumpd
+print
+sdg
+sdg
+add
+sub
+dfh
+;;

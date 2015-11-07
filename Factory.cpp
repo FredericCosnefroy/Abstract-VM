@@ -4,6 +4,7 @@
 #include "IOperand.hpp"
 #include "eOperandType.hpp"
 #include "Operand.hpp"
+
 Factory::Factory( void ) {
 
 }
@@ -70,4 +71,3 @@ IOperand const * Factory::createOperand( eOperandType type, std::string const & 
 																	};									
 	return ((this->*ptr[static_cast<int>(type)])(value));
 }
-

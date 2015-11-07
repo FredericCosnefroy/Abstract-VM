@@ -6,19 +6,45 @@
 #include "Factory.hpp"
 
 
-VM::VM(std::vector<Instruction const *> const & instructions) : _instructions(instructions) {
+const char* VM::PopException::what() const throw() {
+
+	return ("pop on empty stack");
+}
+
+const char* VM::DivisionByZeroException::what() const throw() {
+
+	return ("division by zero");
+}
+
+const char* VM::ModuloByZeroException::what() const throw() {
+
+	return ("modulo by zero");
+}
+
+const char* VM::AssertionFailedException::what() const throw() {
+
+	return ("assertion failed");
+}
+
+VM::VM(std::vector<Instruction const *> const & instructions) : _line(1), _instructions(instructions) {
 
 }
 
-VM::VM( VM const & src ) : _stack(src.getStack()), _instructions(src.getInstructions()) {
+VM::VM( VM const & src ) :  _line(src.getLine()), _stack(src.getStack()), _instructions(src.getInstructions()) {
 
 }
 
 VM &	VM::operator=( VM const & rhs ) {
 
+	_line = rhs.getLine();
 	_stack = rhs.getStack();
 	_instructions = rhs.getInstructions();
 	return (*this);
+}
+
+int VM::getLine() const {
+
+	return (_line);
 }
 
 std::vector<IOperand const *> const & VM::getStack( void ) const {
@@ -44,14 +70,14 @@ IOperand const *VM::pop( void ) {
 		_stack.pop_back();
 		return (tmp);
 	}
-	std::cout << "Pop on empty stack" << std::endl;
+	throw VM::PopException();
 	return (NULL);
 }
 
 void		VM::dump( void ) {
 
-	for (int i = _stack.size() - 1; i > 0; i--)
-		std::cout << _stack.at(i)->toString() << std::endl; 
+	for (int i = _stack.size() - 1; i >= 0; i--)
+		std::cout << "> " << _stack.at(i)->toString() << std::endl;
 }
 
 void		VM::assert( IOperand const & o ) {
@@ -68,7 +94,7 @@ void		VM::assert( IOperand const & o ) {
 	bool operandsHaveSameType = (_stack.back()->getType() == o.getType());
 	bool operandsAreEqual = (thisValue == operandValue);
 	if (!(operandsAreEqual && operandsHaveSameType))
-		std::cout << "Assertion failed " << thisValue  << " " << operandValue << std::endl;
+		throw AssertionFailedException();
 }
 
 void		VM::add( void ) {
@@ -84,7 +110,7 @@ void		VM::sub( void ) {
 
 	const IOperand * op1 = this->pop();
 	const IOperand * op2 = this->pop();
-	this->push(*(*op1 + *op2));
+	this->push(*(*op2 - *op1));
 	delete op1;
 	delete op2;
 }
@@ -93,7 +119,7 @@ void		VM::mul( void ) {
 
 	const IOperand * op1 = this->pop();
 	const IOperand * op2 = this->pop();
-	this->push(*(*op1 + *op2));
+	this->push(*(*op1 * *op2));
 	delete op1;
 	delete op2;
 }
@@ -102,7 +128,9 @@ void		VM::div( void ) {
 
 	const IOperand * op1 = this->pop();
 	const IOperand * op2 = this->pop();
-	this->push(*(*op1 + *op2));
+	if (op1->toString().compare("0") == 0)
+		throw VM::DivisionByZeroException();
+	this->push(*(*op2 / *op1));
 	delete op1;
 	delete op2;
 }
@@ -111,7 +139,9 @@ void		VM::mod( void ) {
 
 	const IOperand * op1 = this->pop();
 	const IOperand * op2 = this->pop();
-	this->push(*(*op1 + *op2));
+	if (op1->toString().compare("0") == 0)
+		throw VM::ModuloByZeroException();
+	this->push(*(*op2 % *op1));
 	delete op1;
 	delete op2;
 }
@@ -135,7 +165,7 @@ void		VM::print( void ) {
 
 void		VM::exit( void ) {
 
-	exit();
+	throw VM::TerminateException(); 
 }
 
 void		VM::execute( Factory const & factory ) {
@@ -151,9 +181,9 @@ void		VM::execute( Factory const & factory ) {
 														&VM::exit
 												};
 	void (VM::*paramInstructions[])( IOperand const & ) = 	{
-																	&VM::push,
-																	&VM::assert
-																};
+																&VM::push,
+																&VM::assert
+															};
 
 	Instruction const * i = _instructions.at(0);
 	eCommandName name = i->getCommandName();
@@ -176,10 +206,6 @@ void 	VM::run( void ) {
 	Factory factory;
 	while (_instructions.size() > 0) {
 		execute( factory );
+		_line++;
 	}
 }
-
-
-
-
-

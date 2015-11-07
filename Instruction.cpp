@@ -3,25 +3,27 @@
 #include "Parameter.hpp"
 #include "eCommandName.hpp"
 
-Instruction::Instruction( void ) : 	_commandIndex(-1),
-									_commandName(Unknown),
-									_parameter(NULL),
-									_expectsParameter(false) {
+Instruction::Instruction( void ) :
+	_commandIndex(-1),
+	_commandName(Unknown),
+	_parameter(NULL),
+	_expectsParameter(false) {
 
 }
 
-Instruction::Instruction( int commandIndex, eCommandName commandName, bool expectsParameter ) :	_commandIndex(commandIndex),
-																								_commandName(commandName),
-																								_parameter(NULL),
-																								_expectsParameter(expectsParameter) {
+Instruction::Instruction( int commandIndex, eCommandName commandName, bool expectsParameter ) :
+	_commandIndex(commandIndex),
+	_commandName(commandName),
+	_parameter(NULL),
+	_expectsParameter(expectsParameter) {
 
 }
 
-Instruction::Instruction( Instruction const & src ) : 	_commandIndex(src.getCommandIndex()),
-														_commandName(src.getCommandName()),
-														_parameter(src.getParameter()),
-														_expectsParameter(src.expectsParameter()) {
-
+Instruction::Instruction( Instruction const & src ) :
+	_commandIndex(src.getCommandIndex()),
+	_commandName(src.getCommandName()),
+	_parameter(src.getParameter()),
+	_expectsParameter(src.expectsParameter()) {
 
 }
 

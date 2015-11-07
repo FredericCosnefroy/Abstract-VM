@@ -6,20 +6,6 @@
 #include "Parameter.hpp"
 #include "Parser.hpp"
 
-template<typename T> 
-bool	Parser::isOfType( std::string const & value) {
-
-	std::istringstream iss(value);
-	std::stringstream ss;
-	bool convertionIsValid;
-	T i;
-
-	convertionIsValid = iss >> std::fixed >> i >> std::fixed;
-	ss << std::fixed << i;
-	std::cout << iss.str() << " " << ss.str() << std::endl;
-	return ((iss.str().compare(ss.str()) == 0) && convertionIsValid && iss.eof());
-}
-
 eOperandType 	Parser::findOperand( std::string const & data, Instruction const & ins) {
 
 	const std::string operands[] = {"int8", "int16", "int32", "float", "double"};
@@ -35,6 +21,22 @@ eOperandType 	Parser::findOperand( std::string const & data, Instruction const &
 	return (Void);
 }
 
+bool			Parser::checkComment( std::string const & data, size_t eoc )
+{
+	size_t comPos = data.find_first_of(";");
+
+	if (comPos == std::string::npos)
+		comPos = data.size();
+	if (comPos < eoc)
+		return (false);
+	for (size_t i = eoc ; i < comPos ; i++)
+	{
+		if (data[i] != ' ')
+			return (false);
+	}
+	return (true);
+}
+
 std::string 	 Parser::findValue( std::string const & data, eOperandType e) {
 
 	size_t opPar = data.find_first_of("(");
@@ -43,13 +45,15 @@ std::string 	 Parser::findValue( std::string const & data, eOperandType e) {
 
 	if (opPar > clPar || opPar == std::string::npos || clPar == std::string::npos)
 		return ("");
+	if (!checkComment(data, clPar + 1))
+		return ("");
 	value = data.substr(opPar + 1, clPar - opPar - 1);
 	switch (e) {
-		case Int8 : return (isOfType<int16_t>(value) ? value : ""); break;
-		case Int16 : return (isOfType<int16_t>(value) ? value : ""); break;
-		case Int32 : return (isOfType<int32_t>(value) ? value : ""); break;
-		case Float : return (isOfType<float>(value) ? value : ""); break;
-		case Double : return (isOfType<double>(value) ? value : ""); break;
+		case Int8 : return (isOfType<int16_t>(value, true) ? value : ""); break;
+		case Int16 : return (isOfType<int16_t>(value, false) ? value : ""); break;
+		case Int32 : return (isOfType<int32_t>(value, false) ? value : ""); break;
+		case Float : return (isOfType<float>(value, false) ? value : ""); break;
+		case Double : return (isOfType<double>(value, false) ? value : ""); break;
 		default : return ("");
 	}
 }
@@ -74,7 +78,7 @@ Instruction 		 Parser::findCommand( std::string const & data ) {
 
 	for (int i = 0; i < 12 ; i++) {
 		if (i >= 2) {
-			if (data.compare(commands[i]) == 0)
+			if (data.compare(0, commands[i].size(), commands[i]) == 0 && checkComment(data, commands[i].size()))
 				return (Instruction(commands[i].size(), static_cast<eCommandName>(i), !expectsParam));
 		} else if (data.compare(0, commands[i].size(), commands[i]) == 0)
 			return (Instruction(commands[i].size(), static_cast<eCommandName>(i), expectsParam));
@@ -107,15 +111,18 @@ std::vector<Instruction const *> const 	 Parser::getInstructionList( void ) {
 	std::string data;
 	int lineNo = 1;
 	
-	std::getline(std::cin, data);
-	while (data.compare(";;") != 0) {
+	do {
+		std::getline(std::cin, data);
+		if (std::cin.eof() || !data.compare(";;"))
+			break;
+		if (data.empty())
+			continue;
 		Instruction *ins = new Instruction(getInstruction(data));
 		if (instructionIsValid(*ins))
 			insVec.push_back(ins);
 		else
 			std::cout << "Error at line " << lineNo << std::endl;
-		std::getline(std::cin, data);
 		lineNo++;
-	}
+	} while (true);
 	return (insVec);
 }

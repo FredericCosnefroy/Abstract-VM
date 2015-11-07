@@ -10,6 +10,7 @@
 class VM {
 
 private:
+	int 								_line;
 	std::vector<IOperand const *> 		_stack;
 	std::vector<Instruction const *> 	_instructions;
 
@@ -18,13 +19,41 @@ private:
 	VM();
 
 public:
+
+	class TerminateException : public std::exception {};
+
+    class PopException : public std::exception {
+
+    	public:
+			virtual const char* what() const throw();
+    };
+
+  	class DivisionByZeroException : public std::exception {
+
+    	public:
+			virtual const char* what() const throw();
+    };
+
+    class ModuloByZeroException : public std::exception {
+
+    	public:
+			virtual const char* what() const throw();
+    };
+
+  	class AssertionFailedException : public std::exception {
+
+    	public:
+			virtual const char* what() const throw();
+    };
+    
+
 	VM(std::vector<Instruction const *> const & instructions);
 	VM( VM const & src );
 	virtual ~VM( void ) {};
 
 	VM &			operator=( VM const & rhs );
 
-	
+	int 				getLine() const;
 
 	void				push( IOperand const & o );
 	IOperand const *	pop( void );

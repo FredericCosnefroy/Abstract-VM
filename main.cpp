@@ -9,8 +9,10 @@
 int main( void ) {
 
 	VM mv = VM(Parser::getInstructionList());
-	mv.run();
+	try { mv.run(); }
+	catch(VM::TerminateException & e) { return (0); }
+	catch(std::exception & e) { std::cout << "Error at line " << mv.getLine() << ": " << e.what() << std::endl; return (-1); }
 
-	//std::cout << i3->toString() << std::endl;
+	std::cout << "Error: exit call not found" << std::endl;
 	return (0);
 }
